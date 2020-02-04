@@ -42,6 +42,7 @@
 #define ROUND0_BITS 3
 #define COMPOUND_ROUND1_BITS 7
 
+#define INTERINTRA_WEDGE_SIGN 0
 
 #define USE_PRECOMPUTED_WEDGE_SIGN 1
 #define USE_PRECOMPUTED_WEDGE_MASK 1
@@ -62,6 +63,112 @@ static const uint8_t wedge_master_vertical[MASK_MASTER_SIZE] = {
         0,  0,  0,  0,  0,  0,  0,  2,  7,  21, 43, 57, 62, 64, 64, 64, 64, 64, 64, 64, 64, 64,
         64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
 };
+
+DECLARE_ALIGNED(16, static uint8_t, wedge_signflip_lookup[BlockSizeS_ALL][MAX_WEDGE_TYPES]) = {
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, },
+        { 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, },
+        { 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, },
+        { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, },
+        { 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, },
+        { 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, },
+        { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, },
+        { 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, },
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },  // not used
+};
+
+
+static const WedgeCodeType wedge_codebook_16_hgtw[16] = {
+        { WEDGE_OBLIQUE27, 4, 4 }, { WEDGE_OBLIQUE63, 4, 4 },
+        { WEDGE_OBLIQUE117, 4, 4 }, { WEDGE_OBLIQUE153, 4, 4 },
+        { WEDGE_HORIZONTAL, 4, 2 }, { WEDGE_HORIZONTAL, 4, 4 },
+        { WEDGE_HORIZONTAL, 4, 6 }, { WEDGE_VERTICAL, 4, 4 },
+        { WEDGE_OBLIQUE27, 4, 2 }, { WEDGE_OBLIQUE27, 4, 6 },
+        { WEDGE_OBLIQUE153, 4, 2 }, { WEDGE_OBLIQUE153, 4, 6 },
+        { WEDGE_OBLIQUE63, 2, 4 }, { WEDGE_OBLIQUE63, 6, 4 },
+        { WEDGE_OBLIQUE117, 2, 4 }, { WEDGE_OBLIQUE117, 6, 4 },
+};
+
+static const WedgeCodeType wedge_codebook_16_hltw[16] = {
+        { WEDGE_OBLIQUE27, 4, 4 }, { WEDGE_OBLIQUE63, 4, 4 },
+        { WEDGE_OBLIQUE117, 4, 4 }, { WEDGE_OBLIQUE153, 4, 4 },
+        { WEDGE_VERTICAL, 2, 4 }, { WEDGE_VERTICAL, 4, 4 },
+        { WEDGE_VERTICAL, 6, 4 }, { WEDGE_HORIZONTAL, 4, 4 },
+        { WEDGE_OBLIQUE27, 4, 2 }, { WEDGE_OBLIQUE27, 4, 6 },
+        { WEDGE_OBLIQUE153, 4, 2 }, { WEDGE_OBLIQUE153, 4, 6 },
+        { WEDGE_OBLIQUE63, 2, 4 }, { WEDGE_OBLIQUE63, 6, 4 },
+        { WEDGE_OBLIQUE117, 2, 4 }, { WEDGE_OBLIQUE117, 6, 4 },
+};
+
+static const WedgeCodeType wedge_codebook_16_heqw[16] = {
+        { WEDGE_OBLIQUE27, 4, 4 }, { WEDGE_OBLIQUE63, 4, 4 },
+        { WEDGE_OBLIQUE117, 4, 4 }, { WEDGE_OBLIQUE153, 4, 4 },
+        { WEDGE_HORIZONTAL, 4, 2 }, { WEDGE_HORIZONTAL, 4, 6 },
+        { WEDGE_VERTICAL, 2, 4 }, { WEDGE_VERTICAL, 6, 4 },
+        { WEDGE_OBLIQUE27, 4, 2 }, { WEDGE_OBLIQUE27, 4, 6 },
+        { WEDGE_OBLIQUE153, 4, 2 }, { WEDGE_OBLIQUE153, 4, 6 },
+        { WEDGE_OBLIQUE63, 2, 4 }, { WEDGE_OBLIQUE63, 6, 4 },
+        { WEDGE_OBLIQUE117, 2, 4 }, { WEDGE_OBLIQUE117, 6, 4 },
+};
+
+static const WedgeParamsType wedge_params_lookup[BlockSizeS_ALL] = {
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 4, wedge_codebook_16_heqw, wedge_signflip_lookup[BLOCK_8X8],
+                wedge_masks[BLOCK_8X8] },
+        { 4, wedge_codebook_16_hgtw, wedge_signflip_lookup[BLOCK_8X16],
+                wedge_masks[BLOCK_8X16] },
+        { 4, wedge_codebook_16_hltw, wedge_signflip_lookup[BLOCK_16X8],
+                wedge_masks[BLOCK_16X8] },
+        { 4, wedge_codebook_16_heqw, wedge_signflip_lookup[BLOCK_16X16],
+                wedge_masks[BLOCK_16X16] },
+        { 4, wedge_codebook_16_hgtw, wedge_signflip_lookup[BLOCK_16X32],
+                wedge_masks[BLOCK_16X32] },
+        { 4, wedge_codebook_16_hltw, wedge_signflip_lookup[BLOCK_32X16],
+                wedge_masks[BLOCK_32X16] },
+        { 4, wedge_codebook_16_heqw, wedge_signflip_lookup[BLOCK_32X32],
+                wedge_masks[BLOCK_32X32] },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+        { 4, wedge_codebook_16_hgtw, wedge_signflip_lookup[BLOCK_8X32],
+                wedge_masks[BLOCK_8X32] },
+        { 4, wedge_codebook_16_hltw, wedge_signflip_lookup[BLOCK_32X8],
+                wedge_masks[BLOCK_32X8] },
+        { 0, NULL, NULL, NULL },
+        { 0, NULL, NULL, NULL },
+};
+
+INLINE int is_interintra_wedge_used(BlockSize sb_type) {
+    return wedge_params_lookup[sb_type].bits > 0;
+}
+
+INLINE int32_t get_wedge_bits_lookup(BlockSize sb_type) {
+    return wedge_params_lookup[sb_type].bits;
+}
+
+INLINE const uint8_t *av1_get_contiguous_soft_mask(int wedge_index, int wedge_sign,
+                                                          BlockSize sb_type) {
+    return wedge_params_lookup[sb_type].masks[wedge_sign][wedge_index];
+}
 
 void aom_convolve_copy_c(const uint8_t *src, ptrdiff_t src_stride, uint8_t *dst,
                          ptrdiff_t dst_stride, const int16_t *filter_x, int filter_x_stride,
@@ -199,6 +306,10 @@ static void init_wedge_signs() {
     }
 }
 #endif // !USE_PRECOMPUTED_WEDGE_SIGN
+
+int get_wedge_params_bits(BlockSize sb_type) {
+    return wedge_params_lookup[sb_type].bits;
+}
 
 static const uint8_t *get_wedge_mask_inplace(int wedge_index, int neg, BlockSize sb_type) {
     const uint8_t *      master;

@@ -21,8 +21,29 @@
 #include "aom_dsp_rtcd.h"
 #include "EbRateDistortionCost.h"
 
+#define AOM_INTERP_EXTEND 4
+
+#define SCALE_NUMERATOR 8
+
+#define SCALE_SUBPEL_BITS 10
+#define SCALE_SUBPEL_SHIFTS (1 << SCALE_SUBPEL_BITS)
+#define SCALE_SUBPEL_MASK (SCALE_SUBPEL_SHIFTS - 1)
+#define SCALE_EXTRA_BITS (SCALE_SUBPEL_BITS - SUBPEL_BITS)
+#define SCALE_EXTRA_OFF ((1 << SCALE_EXTRA_BITS) / 2)
+
+#define BIL_SUBPEL_BITS 3
+#define BIL_SUBPEL_SHIFTS (1 << BIL_SUBPEL_BITS)
+
+#define ROUND0_BITS 3
+#define COMPOUND_ROUND1_BITS 7
+
+
+#define USE_PRECOMPUTED_WEDGE_SIGN 1
+#define USE_PRECOMPUTED_WEDGE_MASK 1
+
 extern void av1_set_ref_frame(MvReferenceFrame *rf, int8_t ref_frame_type);
 extern AomVarianceFnPtr mefn_ptr[BlockSizeS_ALL];
+#define MAX_FILTER_TAP 8
 
 static INLINE MV clamp_mv_to_umv_border_sb(const MacroBlockD *xd, const MV *src_mv, int32_t bw,
                                            int32_t bh, int32_t ss_x, int32_t ss_y) {
@@ -2864,7 +2885,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         {2, 2},
 };
 
-/*Andrey change to master?*/
 void interpolation_filter_search(PictureControlSet *          picture_control_set_ptr,
                                  EbPictureBufferDesc *        prediction_ptr,
                                  ModeDecisionContext *        md_context_ptr,
@@ -2897,7 +2917,7 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 
     switchable_rate = eb_av1_get_switchable_rate(candidate_buffer_ptr, cm, md_context_ptr);
 
-    av1_inter_prediction(
+    av1_inter_prediction_function_table[hbd_mode_decision](
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
             md_context_ptr->blk_ptr,
@@ -4691,7 +4711,6 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                     ->reference_picture_wrapper_ptr->object_ptr)
                     ->reference_picture16bit;
 
-/* Andrey may be a different function here */
         av1_inter_prediction_function_table[hbd_mode_decision > EB_8_BIT_MD](
             picture_control_set_ptr,
             candidate_buffer_ptr->candidate_ptr->interp_filters,
