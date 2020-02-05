@@ -47,7 +47,8 @@
 #define USE_PRECOMPUTED_WEDGE_SIGN 1
 #define USE_PRECOMPUTED_WEDGE_MASK 1
 
-#if USE_PRECOMPUTED_WEDGE_MASK
+static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
+
 static const uint8_t wedge_master_oblique_odd[MASK_MASTER_SIZE] = {
         0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
         0,  0,  0,  0,  0,  0,  1,  2,  6,  18, 37, 53, 60, 63, 64, 64, 64, 64, 64, 64, 64, 64,
@@ -157,16 +158,16 @@ static const WedgeParamsType wedge_params_lookup[BlockSizeS_ALL] = {
         { 0, NULL, NULL, NULL },
 };
 
-INLINE int is_interintra_wedge_used(BlockSize sb_type) {
+int is_interintra_wedge_used(BlockSize sb_type) {
     return wedge_params_lookup[sb_type].bits > 0;
 }
 
-INLINE int32_t get_wedge_bits_lookup(BlockSize sb_type) {
+int32_t get_wedge_bits_lookup(BlockSize sb_type) {
     return wedge_params_lookup[sb_type].bits;
 }
 
-INLINE const uint8_t *av1_get_contiguous_soft_mask(int wedge_index, int wedge_sign,
-                                                          BlockSize sb_type) {
+const uint8_t *av1_get_contiguous_soft_mask(int wedge_index, int wedge_sign,
+                                            BlockSize sb_type) {
     return wedge_params_lookup[sb_type].masks[wedge_sign][wedge_index];
 }
 
@@ -197,7 +198,6 @@ static void shift_copy(const uint8_t *src, uint8_t *dst, int shift, int width) {
         memset(dst + width - shift, src[width - 1], shift);
     }
 }
-#endif // USE_PRECOMPUTED_WEDGE_MASK
 
 // [negative][direction]
 DECLARE_ALIGNED(16, static uint8_t,

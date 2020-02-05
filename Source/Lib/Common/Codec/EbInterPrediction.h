@@ -53,7 +53,6 @@ typedef struct PadBlock {
 #endif
 
 typedef uint8_t *WedgeMasksType[MAX_WEDGE_TYPES];
-static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
 // Angles are with respect to horizontal anti-clockwise
 typedef enum WedgeDirectionType
 {
