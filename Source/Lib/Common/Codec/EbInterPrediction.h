@@ -43,6 +43,15 @@ extern "C" {
         int32_t subpel_y;
     } SubpelParams;
 
+#if MC_DYNAMIC_PAD
+typedef struct PadBlock {
+    int x0;
+    int x1;
+    int y0;
+    int y1;
+} PadBlock;
+#endif
+
 typedef uint8_t *WedgeMasksType[MAX_WEDGE_TYPES];
 static WedgeMasksType wedge_masks[BlockSizeS_ALL][2];
 // Angles are with respect to horizontal anti-clockwise
