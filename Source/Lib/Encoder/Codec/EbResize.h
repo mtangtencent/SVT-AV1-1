@@ -32,7 +32,7 @@ void init_resize_picture(SequenceControlSet* scs_ptr, PictureParentControlSet* p
 
 #define UPSCALE_NORMATIVE_TAPS 8
 
-// Filters for interpolation (0.5-band) - note this also filters integer pels.
+/*!< Filters for interpolation (0.5-band) - note this also filters integer pels. */
 static const InterpKernel filteredinterp_filters500[(1 << RS_SUBPEL_BITS)] = {
     {-3, 0, 35, 64, 35, 0, -3, 0},    {-3, 0, 34, 64, 36, 0, -3, 0},
     {-3, -1, 34, 64, 36, 1, -3, 0},   {-3, -1, 33, 64, 37, 1, -3, 0},
@@ -68,7 +68,7 @@ static const InterpKernel filteredinterp_filters500[(1 << RS_SUBPEL_BITS)] = {
     {0, -3, 1, 36, 64, 34, -1, -3},   {0, -3, 0, 36, 64, 34, 0, -3},
 };
 
-// Filters for interpolation (0.625-band) - note this also filters integer pels.
+/*!< Filters for interpolation (0.625-band) - note this also filters integer pels. */
 static const InterpKernel filteredinterp_filters625[(1 << RS_SUBPEL_BITS)] = {
     {-1, -8, 33, 80, 33, -8, -1, 0}, {-1, -8, 31, 80, 34, -8, -1, 1},
     {-1, -8, 30, 80, 35, -8, -1, 1}, {-1, -8, 29, 80, 36, -7, -2, 1},
@@ -104,7 +104,7 @@ static const InterpKernel filteredinterp_filters625[(1 << RS_SUBPEL_BITS)] = {
     {1, -1, -8, 35, 80, 30, -8, -1}, {1, -1, -8, 34, 80, 31, -8, -1},
 };
 
-// Filters for interpolation (0.75-band) - note this also filters integer pels.
+/*!< Filters for interpolation (0.75-band) - note this also filters integer pels. */
 static const InterpKernel filteredinterp_filters750[(1 << RS_SUBPEL_BITS)] = {
     {2, -11, 25, 96, 25, -11, 2, 0}, {2, -11, 24, 96, 26, -11, 2, 0},
     {2, -11, 22, 96, 28, -11, 2, 0}, {2, -10, 21, 96, 29, -12, 2, 0},
@@ -140,7 +140,7 @@ static const InterpKernel filteredinterp_filters750[(1 << RS_SUBPEL_BITS)] = {
     {0, 2, -11, 28, 96, 22, -11, 2}, {0, 2, -11, 26, 96, 24, -11, 2},
 };
 
-// Filters for interpolation (0.875-band) - note this also filters integer pels.
+/*!< Filters for interpolation (0.875-band) - note this also filters integer pels. */
 static const InterpKernel filteredinterp_filters875[(1 << RS_SUBPEL_BITS)] = {
     {3, -8, 13, 112, 13, -8, 3, 0},   {2, -7, 12, 112, 15, -8, 3, -1},
     {3, -7, 10, 112, 17, -9, 3, -1},  {2, -6, 8, 112, 19, -9, 3, -1},
@@ -215,5 +215,5 @@ static const int16_t av1_resize_filter_normative[(1 << RS_SUBPEL_BITS)][UPSCALE_
 #endif // UPSCALE_NORMATIVE_TAPS == 8
 };
 
-// Filters for interpolation (full-band) - no filtering for integer pixels
+/*!< Filters for interpolation (full-band) - no filtering for integer pixels */
 #define filteredinterp_filters1000 av1_resize_filter_normative

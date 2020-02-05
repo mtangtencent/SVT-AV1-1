@@ -1,18 +1,14 @@
-/*
-* Copyright(c) 2019 Intel Corporation
-* SPDX - License - Identifier: BSD - 2 - Clause - Patent
-*/
+/*!< Copyright(c) 2019 Intel Corporation
+ * SPDX - License - Identifier: BSD - 2 - Clause - Patent */
 
-/*
-* Copyright (c) 2016, Alliance for Open Media. All rights reserved
-*
-* This source code is subject to the terms of the BSD 2 Clause License and
-* the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
-* was not distributed with this source code in the LICENSE file, you can
-* obtain it at www.aomedia.org/license/software. If the Alliance for Open
-* Media Patent License 1.0 was not distributed with this source code in the
-* PATENTS file, you can obtain it at www.aomedia.org/license/patent.
-*/
+/*!< Copyright (c) 2016, Alliance for Open Media. All rights reserved
+ *
+ * This source code is subject to the terms of the BSD 2 Clause License and
+ * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
+ * was not distributed with this source code in the LICENSE file, you can
+ * obtain it at www.aomedia.org/license/software. If the Alliance for Open
+ * Media Patent License 1.0 was not distributed with this source code in the
+ * PATENTS file, you can obtain it at www.aomedia.org/license/patent. */
 
 #define RTCD_C
 #include "aom_dsp_rtcd.h"
@@ -34,9 +30,9 @@
 #include "EbAvcStyleMcp.h"
 
 
-/**************************************
- * Instruction Set Support
- **************************************/
+/**************************************/
+/*!< Instruction Set Support */
+/**************************************/
 
 #ifndef NON_AVX512_SUPPORT
 #define SET_FUNCTIONS(ptr, c, mmx, sse, sse2, sse3, ssse3, sse4_1, sse4_2, avx, avx2, avx512) \
@@ -70,11 +66,11 @@
 #endif
 
 void setup_rtcd_internal(CPU_FLAGS flags) {
-    /** Should be done during library initialization,
-        but for safe limiting cpu flags again. */
+    /*!< Should be done during library initialization,
+     *   but for safe limiting cpu flags again. */
     flags &= get_cpu_flags_to_use();
 
-    //to use C: flags=0
+    /*!< to use C: flags=0 */
 
     eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_c;
     if (flags & HAS_AVX2) eb_apply_selfguided_restoration = eb_apply_selfguided_restoration_avx2;
@@ -127,7 +123,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_c;
     if (flags & HAS_AVX2) eb_av1_compute_stats_highbd = eb_av1_compute_stats_highbd_avx2;
     eb_cdef_filter_block_8x8_16 =
-        eb_cdef_filter_block_8x8_16_avx2; // It has no c version, and is only called in parent avx2 function, so it's safe to initialize to avx2 version.
+        eb_cdef_filter_block_8x8_16_avx2; /*!< It has no c version, and is only called in parent avx2 function, so it's safe to initialize to avx2 version. */
 #ifndef NON_AVX512_SUPPORT
     if (flags & HAS_AVX512F) {
         eb_cdef_filter_block_8x8_16 = eb_cdef_filter_block_8x8_16_avx512;
@@ -765,7 +761,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_h_predictor_8x4 = eb_aom_h_predictor_8x4_c;
     if (flags & HAS_SSE2) eb_aom_h_predictor_8x4 = eb_aom_h_predictor_8x4_sse2;
 
-    //SAD
+    /*!< SAD */
     eb_aom_sad4x4 = eb_aom_sad4x4_c;
     if (flags & HAS_AVX2) eb_aom_sad4x4 = eb_aom_sad4x4_avx2;
     eb_aom_sad4x4x4d = eb_aom_sad4x4x4d_c;
@@ -1032,7 +1028,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     aom_obmc_variance8x8 = aom_obmc_variance8x8_c;
     if (flags & HAS_AVX2) aom_obmc_variance8x8 = aom_obmc_variance8x8_avx2;
 
-    //VARIANCE
+    /*!< VARIANCE */
     eb_aom_variance4x4 = eb_aom_variance4x4_c;
     if (flags & HAS_AVX2) eb_aom_variance4x4 = eb_aom_variance4x4_sse2;
     eb_aom_variance4x8 = eb_aom_variance4x8_c;
@@ -1078,7 +1074,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_variance128x128 = eb_aom_variance128x128_c;
     if (flags & HAS_AVX2) eb_aom_variance128x128 = eb_aom_variance128x128_avx2;
 
-    // VARIANCE HBP
+    /*!< VARIANCE HBP */
     eb_aom_highbd_10_variance4x4 = eb_aom_highbd_10_variance4x4_c;
     eb_aom_highbd_10_variance4x8 = eb_aom_highbd_10_variance4x8_c;
     eb_aom_highbd_10_variance4x16 = eb_aom_highbd_10_variance4x16_c;
@@ -1120,13 +1116,13 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     eb_aom_highbd_10_variance128x128 = eb_aom_highbd_10_variance128x128_c;
     if (flags & HAS_AVX2) eb_aom_highbd_10_variance128x128 = eb_aom_highbd_10_variance128x128_avx2;
 
-    //QIQ
+    /*!< QIQ */
     eb_aom_quantize_b_64x64 = eb_aom_quantize_b_64x64_c_ii;
     if (flags & HAS_AVX2) eb_aom_quantize_b_64x64 = eb_aom_quantize_b_64x64_avx2;
 
     eb_aom_highbd_quantize_b_64x64 = eb_aom_highbd_quantize_b_64x64_c;
     if (flags & HAS_AVX2) eb_aom_highbd_quantize_b_64x64 = eb_aom_highbd_quantize_b_64x64_avx2;
-    // transform
+    /*!< transform */
     eb_av1_fwd_txfm2d_16x8 = eb_av1_fwd_txfm2d_16x8_c;
     if (flags & HAS_AVX2) eb_av1_fwd_txfm2d_16x8 = eb_av1_fwd_txfm2d_16x8_avx2;
     eb_av1_fwd_txfm2d_8x16 = eb_av1_fwd_txfm2d_8x16_c;
@@ -1193,7 +1189,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     handle_transform64x64 = handle_transform64x64_c;
     if (flags & HAS_AVX2) handle_transform64x64 = handle_transform64x64_avx2;
 
-    // eb_aom_highbd_v_predictor
+    /*!< eb_aom_highbd_v_predictor */
     eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_c;
     if (flags & HAS_AVX2) eb_aom_highbd_v_predictor_16x16 = eb_aom_highbd_v_predictor_16x16_avx2;
     eb_aom_highbd_v_predictor_16x32 = eb_aom_highbd_v_predictor_16x32_c;
@@ -1244,7 +1240,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     }
 #endif // !NON_AVX512_SUPPORT
 
-    //aom_highbd_smooth_predictor
+    /*!< aom_highbd_smooth_predictor */
     eb_aom_highbd_smooth_predictor_16x16 = eb_aom_highbd_smooth_predictor_16x16_c;
     if (flags & HAS_AVX2)
         eb_aom_highbd_smooth_predictor_16x16 = eb_aom_highbd_smooth_predictor_16x16_avx2;
@@ -1317,7 +1313,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     }
 #endif // !NON_AVX512_SUPPORT
 
-    //aom_highbd_smooth_h_predictor
+    /*!< aom_highbd_smooth_h_predictor */
     eb_aom_highbd_smooth_h_predictor_16x16 = eb_aom_highbd_smooth_h_predictor_16x16_c;
     if (flags & HAS_AVX2)
         eb_aom_highbd_smooth_h_predictor_16x16 = eb_aom_highbd_smooth_h_predictor_16x16_avx2;
@@ -1388,7 +1384,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     }
 #endif
 
-    //aom_highbd_dc_128_predictor
+    /*!< aom_highbd_dc_128_predictor */
     eb_aom_highbd_dc_128_predictor_16x16 = eb_aom_highbd_dc_128_predictor_16x16_c;
     if (flags & HAS_AVX2)
         eb_aom_highbd_dc_128_predictor_16x16 = eb_aom_highbd_dc_128_predictor_16x16_avx2;
@@ -1447,7 +1443,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
     if (flags & HAS_SSE2)
         eb_aom_highbd_dc_128_predictor_8x8 = eb_aom_highbd_dc_128_predictor_8x8_sse2;
 
-    //aom_highbd_dc_left_predictor
+    /*!< aom_highbd_dc_left_predictor */
     eb_aom_highbd_dc_left_predictor_16x16 = eb_aom_highbd_dc_left_predictor_16x16_c;
     if (flags & HAS_AVX2)
         eb_aom_highbd_dc_left_predictor_16x16 = eb_aom_highbd_dc_left_predictor_16x16_avx2;
@@ -1570,7 +1566,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
         eb_aom_highbd_dc_predictor_64x64 = aom_highbd_dc_predictor_64x64_avx512;
     }
 #endif // !NON_AVX512_SUPPORT
-    //aom_highbd_dc_top_predictor
+    /*!< aom_highbd_dc_top_predictor */
     eb_aom_highbd_dc_top_predictor_16x16 = eb_aom_highbd_dc_top_predictor_16x16_c;
     if (flags & HAS_AVX2)
         eb_aom_highbd_dc_top_predictor_16x16 = eb_aom_highbd_dc_top_predictor_16x16_avx2;
@@ -1639,7 +1635,7 @@ void setup_rtcd_internal(CPU_FLAGS flags) {
         eb_aom_highbd_dc_top_predictor_64x64 = aom_highbd_dc_top_predictor_64x64_avx512;
     }
 #endif
-    // eb_aom_highbd_h_predictor
+    /*!< eb_aom_highbd_h_predictor */
     eb_aom_highbd_h_predictor_16x4 = eb_aom_highbd_h_predictor_16x4_c;
     if (flags & HAS_AVX2) eb_aom_highbd_h_predictor_16x4 = eb_aom_highbd_h_predictor_16x4_avx2;
     eb_aom_highbd_h_predictor_16x64 = eb_aom_highbd_h_predictor_16x64_c;
