@@ -863,6 +863,7 @@ void *picture_manager_kernel(void *input_ptr) {
                         uint32_t enc_dec_seg_col_cnt = entry_scs_ptr->enc_dec_segment_col_count_array
                                                        [entry_pcs_ptr->temporal_layer_index];
                         uint32_t enc_dec_seg_row_cnt = entry_scs_ptr->enc_dec_segment_row_count_array
+
                                                        [entry_pcs_ptr->temporal_layer_index];
 
                         struct PictureParentControlSet *ppcs_ptr = child_pcs_ptr->parent_pcs_ptr;
