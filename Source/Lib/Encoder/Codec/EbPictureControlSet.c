@@ -1997,7 +1997,7 @@ EbErrorType picture_parent_control_set_ctor(PictureParentControlSet *object_ptr,
     object_ptr->av1_cm->mi_stride = picture_sb_width * (BLOCK_SIZE_64 / 4);
 
 //    object_ptr->av1_cm->p_pcs_ptr = object_ptr;
-//    object_ptr->av1_cm->seq_header_ptr = object_ptr->se
+
 
     EB_MALLOC_ARRAY(object_ptr->av1_cm->frame_to_show, 1);
 
