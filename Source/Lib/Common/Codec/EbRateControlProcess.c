@@ -4336,7 +4336,7 @@ static void sb_qp_derivation_tpl_la(
 #else
             delta_qp = 0;
 #endif
-            printf("kelvinrc ---> frame%d sb_addr=%d delta_qp=%d\n", picture_control_set_ptr->parent_pcs_ptr->picture_number, sb_addr, delta_qp);
+            //printf("kelvinrc ---> frame%d sb_addr=%d delta_qp=%d\n", picture_control_set_ptr->parent_pcs_ptr->picture_number, sb_addr, delta_qp);
 #if 0
             if (picture_control_set_ptr->slice_type == 2) {
                 referenced_area_sb = MIN(REF_AREA_MED_THRESHOLD + REF_AREA_LOW_THRESHOLD, referenced_area_sb);
