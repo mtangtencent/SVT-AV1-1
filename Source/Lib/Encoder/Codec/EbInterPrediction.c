@@ -6242,11 +6242,20 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
                                  EbPictureBufferDesc *ref_pic_list1, uint8_t hbd_mode_decision,
                                  uint8_t bit_depth) {
     const Av1Common *cm = picture_control_set_ptr->parent_pcs_ptr->av1_cm; //&cpi->common;
+#if MOVE_OPT
+    EbBool           use_uv =
+        (md_context_ptr->blk_geom->has_uv && 
+        (md_context_ptr->chroma_level == CHROMA_MODE_01 || md_context_ptr->chroma_level <= CHROMA_MODE_1) &&
+         md_context_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND)
+            ? EB_TRUE
+            : EB_FALSE;
+#else
     EbBool           use_uv =
         (md_context_ptr->blk_geom->has_uv && md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
          md_context_ptr->interpolation_search_level != IT_SEARCH_FAST_LOOP_UV_BLIND)
             ? EB_TRUE
             : EB_FALSE;
+#endif
     const int32_t num_planes      = use_uv ? MAX_MB_PLANE : 1;
     int64_t       rd              = INT64_MAX;
     int32_t       switchable_rate = 0;
@@ -6576,8 +6585,14 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
             candidate_buffer_ptr->prediction_ptr,
             md_context_ptr->blk_geom->origin_x,
             md_context_ptr->blk_geom->origin_y,
+#if MOVE_OPT
+            (md_context_ptr->chroma_level == CHROMA_MODE_01 ||
+                md_context_ptr->chroma_level <= CHROMA_MODE_1) &&
+                md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
+#else
             md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
                 md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
+#endif
             hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
         return return_error;
@@ -6655,8 +6670,14 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
                                  &candidate_ptr->wm_params_l0,
                                  &candidate_ptr->wm_params_l1,
                                  bit_depth,
+#if MOVE_OPT
+                                 (md_context_ptr->chroma_level == CHROMA_MODE_01 || 
+                                     md_context_ptr->chroma_level <= CHROMA_MODE_1) &&
+                                     md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE);
+#else
                                  md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
                                      md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE);
+#endif
 
         return return_error;
     }
@@ -6757,8 +6778,14 @@ EbErrorType inter_pu_prediction_av1(uint8_t hbd_mode_decision, ModeDecisionConte
         candidate_buffer_ptr->prediction_ptr,
         md_context_ptr->blk_geom->origin_x,
         md_context_ptr->blk_geom->origin_y,
+#if MOVE_OPT
+        (md_context_ptr->chroma_level == CHROMA_MODE_01 ||
+            md_context_ptr->chroma_level <= CHROMA_MODE_1) &&
+            md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
+#else
         md_context_ptr->chroma_level <= CHROMA_MODE_1 &&
             md_context_ptr->md_staging_skip_inter_chroma_pred == EB_FALSE,
+#endif
         hbd_mode_decision ? EB_10BIT : EB_8BIT);
 
     return return_error;
