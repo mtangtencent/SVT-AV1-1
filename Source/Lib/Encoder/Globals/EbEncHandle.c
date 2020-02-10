@@ -2512,8 +2512,8 @@ static EbErrorType verify_settings(
         return_error = EB_ErrorBadParameter;
     }
 
-    if (config->screen_content_mode > 1) {
-        SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 1]\n", channel_number + 1);
+    if (config->screen_content_mode > 2) {
+        SVT_LOG("Error instance %u : Invalid screen_content_mode. screen_content_mode must be [0 - 2]\n", channel_number + 1);
         return_error = EB_ErrorBadParameter;
     }
     if (scs_ptr->static_config.enable_adaptive_quantization > 2) {
