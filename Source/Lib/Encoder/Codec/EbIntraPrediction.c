@@ -2968,33 +2968,33 @@ if (use_filter_intra) {
 }
 
 void eb_av1_predict_intra_block(
-    TileInfo * tile,
-    STAGE       stage,
-    const BlockGeom * blk_geom,
-    const Av1Common *cm,
-    int32_t wpx,
-    int32_t hpx,
-    TxSize tx_size,
-    PredictionMode mode,
-    int32_t angle_delta,
-    int32_t use_palette,
-    PaletteInfo  *palette_info,
-    FilterIntraMode filter_intra_mode,
-    uint8_t* top_neigh_array,
-    uint8_t* left_neigh_array,
-    EbPictureBufferDesc  *recon_buffer,
-    int32_t col_off,
-    int32_t row_off,
-    int32_t plane,
-    BlockSize bsize,
-    uint32_t txb_org_x_pict,
-    uint32_t txb_org_y_pict,
-    uint32_t bl_org_x_pict,
-    uint32_t bl_org_y_pict,
-    uint32_t bl_org_x_mb,
-    uint32_t bl_org_y_mb,
-    ModeInfo **mi_grid_base,
-    SeqHeader *seq_header_ptr)
+        TileInfo * tile,
+        STAGE       stage,
+        const BlockGeom * blk_geom,
+        const Av1Common *cm,
+        int32_t wpx,
+        int32_t hpx,
+        TxSize tx_size,
+        PredictionMode mode,
+        int32_t angle_delta,
+        int32_t use_palette,
+        PaletteInfo  *palette_info,
+        FilterIntraMode filter_intra_mode,
+        uint8_t* top_neigh_array,
+        uint8_t* left_neigh_array,
+        EbPictureBufferDesc  *recon_buffer,
+        int32_t col_off,
+        int32_t row_off,
+        int32_t plane,
+        BlockSize bsize,
+        uint32_t txb_org_x_pict,
+        uint32_t txb_org_y_pict,
+        uint32_t bl_org_x_pict,
+        uint32_t bl_org_y_pict,
+        uint32_t bl_org_x_mb,
+        uint32_t bl_org_y_mb,
+        ModeInfo **mi_grid_base,
+        SeqHeader *seq_header_ptr)
 {
     MacroBlockD xd_s;
     MacroBlockD *xd = &xd_s;
@@ -3075,7 +3075,7 @@ void eb_av1_predict_intra_block(
     ModeInfo *mi_ptr = *xd->mi;
 
     if (xd->up_available) {
-       // xd->above_mbmi = xd->mi[-xd->mi_stride].mbmi;
+        // xd->above_mbmi = xd->mi[-xd->mi_stride].mbmi;
         xd->above_mbmi = &mi_ptr[-mi_stride].mbmi;
     }
     else
@@ -3087,7 +3087,7 @@ void eb_av1_predict_intra_block(
     else
         xd->left_mbmi = NULL;
     const int chroma_ref = ((mirow & 0x01) || !(bh & 0x01) || !ss_y) &&
-        ((micol & 0x01) || !(bw & 0x01) || !ss_x);
+                           ((micol & 0x01) || !(bw & 0x01) || !ss_x);
     if (chroma_ref) {
         // To help calculate the "above" and "left" chroma blocks, note that the
         // current block may cover multiple luma blocks (eg, if partitioned into
@@ -3101,11 +3101,11 @@ void eb_av1_predict_intra_block(
         // region, which is the bottom-right-most mi unit.
         // This leads to the following offsets:
         MbModeInfo *chroma_above_mi =
-            chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
+                chroma_up_available ? &mi_ptr[-mi_stride + ss_x].mbmi : NULL;
         xd->chroma_above_mbmi = chroma_above_mi;
 
         MbModeInfo *chroma_left_mi =
-            chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
+                chroma_left_available ? &mi_ptr[ss_y * mi_stride - 1].mbmi : NULL;
         xd->chroma_left_mbmi = chroma_left_mi;
     }
 
@@ -3117,13 +3117,13 @@ void eb_av1_predict_intra_block(
     if (use_palette) {
         int32_t r, c;
 
-         const uint8_t *const map = palette_info->color_idx_map;
-         const uint16_t *const palette =
-             palette_info->pmi.palette_colors + plane * PALETTE_MAX_SIZE;
+        const uint8_t *const map = palette_info->color_idx_map;
+        const uint16_t *const palette =
+                palette_info->pmi.palette_colors + plane * PALETTE_MAX_SIZE;
         for (r = 0; r < txhpx; ++r) {
             for (c = 0; c < txwpx; ++c) {
-            dst[r * dst_stride + c] =
-                (uint8_t)palette[map[(r + y) * wpx + c + x]];
+                dst[r * dst_stride + c] =
+                        (uint8_t)palette[map[(r + y) * wpx + c + x]];
             }
         }
         return;
@@ -3139,10 +3139,10 @@ void eb_av1_predict_intra_block(
     const int32_t txw = tx_size_wide_unit[tx_size];
     const int32_t txh = tx_size_high_unit[tx_size];
     const int32_t have_top = row_off || (pd->subsampling_y ? /*xd->*/chroma_up_available
-        : xd->up_available);
+                                                           : xd->up_available);
     const int32_t have_left =
-        col_off ||
-        (pd->subsampling_x ? /*xd->*/chroma_left_available : xd->left_available);
+            col_off ||
+            (pd->subsampling_x ? /*xd->*/chroma_left_available : xd->left_available);
     const int32_t mi_row = -xd->mb_to_top_edge >> (3 + MI_SIZE_LOG2);
     const int32_t mi_col = -xd->mb_to_left_edge >> (3 + MI_SIZE_LOG2);
     const int32_t xr_chr_offset = 0;
@@ -3151,16 +3151,16 @@ void eb_av1_predict_intra_block(
     // Distance between the right edge of this prediction block to
     // the frame right edge
     const int32_t xr = (xd->mb_to_right_edge >> (3 + pd->subsampling_x)) +
-        (wpx - x - txwpx) - xr_chr_offset;
+                       (wpx - x - txwpx) - xr_chr_offset;
     // Distance between the bottom edge of this prediction block to
     // the frame bottom edge
     const int32_t yd = (xd->mb_to_bottom_edge >> (3 + pd->subsampling_y)) +
-        (hpx - y - txhpx) - yd_chr_offset;
+                       (hpx - y - txhpx) - yd_chr_offset;
     const int32_t right_available =
-        mi_col + ((col_off + txw) << pd->subsampling_x) < xd->tile.mi_col_end;
+            mi_col + ((col_off + txw) << pd->subsampling_x) < xd->tile.mi_col_end;
     const int32_t bottom_available =
-        (yd > 0) &&
-        (mi_row + ((row_off + txh) << pd->subsampling_y) < xd->tile.mi_row_end);
+            (yd > 0) &&
+            (mi_row + ((row_off + txh) << pd->subsampling_y) < xd->tile.mi_row_end);
 
     const PartitionType partition = from_shape_to_part[blk_geom->shape]; //blk_ptr->part;// PARTITION_NONE;//CHKN this is good enough as the avail functions need to know if VERT part is used or not mbmi->partition;
 
@@ -3168,13 +3168,13 @@ void eb_av1_predict_intra_block(
     bsize = scale_chroma_bsize(bsize, pd->subsampling_x, pd->subsampling_y);
 
     const int32_t have_top_right = intra_has_top_right(
-        seq_header_ptr->sb_size, bsize,
-        mi_row, mi_col, have_top, right_available, partition, tx_size,
-        row_off, col_off, pd->subsampling_x, pd->subsampling_y);
+            seq_header_ptr->sb_size, bsize,
+            mi_row, mi_col, have_top, right_available, partition, tx_size,
+            row_off, col_off, pd->subsampling_x, pd->subsampling_y);
     const int32_t have_bottom_left = intra_has_bottom_left(
-        seq_header_ptr->sb_size, bsize,
-        mi_row, mi_col, bottom_available, have_left, partition,
-        tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
+            seq_header_ptr->sb_size, bsize,
+            mi_row, mi_col, bottom_available, have_left, partition,
+            tx_size, row_off, col_off, pd->subsampling_x, pd->subsampling_y);
 
     const int32_t disable_edge_filter = 0;//CHKN !cm->seq_params.enable_intra_edge_filter;
 
@@ -3190,17 +3190,17 @@ void eb_av1_predict_intra_block(
     //}
 
     build_intra_predictors(
-        xd,
-        top_neigh_array,
-        left_neigh_array,
-        // ref, ref_stride,
-        dst, dst_stride, mode,
-        angle_delta, filter_intra_mode, tx_size,
-        disable_edge_filter,
-        have_top ? AOMMIN(txwpx, xr + txwpx) : 0,
-        have_top_right ? AOMMIN(txwpx, xr) : 0,
-        have_left ? AOMMIN(txhpx, yd + txhpx) : 0,
-        have_bottom_left ? AOMMIN(txhpx, yd) : 0, plane);
+            xd,
+            top_neigh_array,
+            left_neigh_array,
+            // ref, ref_stride,
+            dst, dst_stride, mode,
+            angle_delta, filter_intra_mode, tx_size,
+            disable_edge_filter,
+            have_top ? AOMMIN(txwpx, xr + txwpx) : 0,
+            have_top_right ? AOMMIN(txwpx, xr) : 0,
+            have_left ? AOMMIN(txhpx, yd + txhpx) : 0,
+            have_bottom_left ? AOMMIN(txhpx, yd) : 0, plane);
 }
 
 void eb_av1_predict_intra_block_16bit(

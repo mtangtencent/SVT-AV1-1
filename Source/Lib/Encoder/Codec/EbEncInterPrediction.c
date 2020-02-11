@@ -132,7 +132,6 @@ void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint
 }
 
 
-
 #define MAX_MASK_VALUE (1 << WEDGE_WEIGHT_BITS)
 
 /**
@@ -368,8 +367,6 @@ uint64_t aom_sum_squares_i16_c(const int16_t *src, uint32_t n) {
 
     return ss;
 }
-
-
 /**
  * Choose the mask sign for a compound predictor.
  *
@@ -480,6 +477,7 @@ static void pick_wedge(PictureControlSet *picture_control_set_ptr, ModeDecisionC
         }
     }
 }
+
 
 static int8_t estimate_wedge_sign(PictureControlSet *  picture_control_set_ptr,
                                   ModeDecisionContext *context_ptr, const BlockSize bsize,
@@ -873,7 +871,6 @@ extern void eb_av1_predict_intra_block_16bit(
         int32_t plane, BlockSize bsize, uint32_t tu_org_x_pict, uint32_t tu_org_y_pict,
         uint32_t bl_org_x_pict, uint32_t bl_org_y_pict, uint32_t bl_org_x_mb, uint32_t bl_org_y_mb,
         ModeInfo **mi_grid_base, SeqHeader *seq_header_ptr);
-
 
 struct build_prediction_hbd_ctxt {
     const AV1_COMMON *cm;
@@ -1965,14 +1962,15 @@ static INLINE void calc_target_weighted_pred_left(uint8_t is16bit, MacroBlockD *
     }
 }
 
+
 void av1_make_masked_warp_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint16_t buf_width,
-                                          uint16_t buf_height, uint8_t *dst_ptr,
-                                          uint32_t dst_stride, const BlockGeom *blk_geom,
-                                          uint8_t bwidth, uint8_t bheight,
-                                          ConvolveParams *        conv_params,
-                                          InterInterCompoundData *comp_data, uint8_t bitdepth,
-                                          uint8_t plane, uint16_t pu_origin_x, uint16_t pu_origin_y,
-                                          EbWarpedMotionParams *wm_params_l1) {
+                                        uint16_t buf_height, uint8_t *dst_ptr,
+                                        uint32_t dst_stride, const BlockGeom *blk_geom,
+                                        uint8_t bwidth, uint8_t bheight,
+                                        ConvolveParams *        conv_params,
+                                        InterInterCompoundData *comp_data, uint8_t bitdepth,
+                                        uint8_t plane, uint16_t pu_origin_x, uint16_t pu_origin_y,
+                                        EbWarpedMotionParams *wm_params_l1) {
     EbBool is16bit = (EbBool)(bitdepth > EB_8BIT);
 
     //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
@@ -2243,7 +2241,6 @@ void precompute_obmc_data(PictureControlSet *  picture_control_set_ptr,
                               dst_stride2[0]);
 }
 
-
 static void chroma_plane_warped_motion_prediction_sub8x8(
         PictureControlSet *picture_control_set_ptr, uint8_t compound_idx, BlkStruct *blk_ptr,
         const BlockGeom *blk_geom, uint8_t bwidth, uint8_t bheight, uint8_t is_compound,
@@ -2255,8 +2252,13 @@ static void chroma_plane_warped_motion_prediction_sub8x8(
     InterpFilterParams filter_params_x, filter_params_y;
 
     MV mv_l0;
+#if WARP_IMPROVEMENT
+    mv_l0.col = mv_unit->mv[mv_unit->pred_direction].x;
+    mv_l0.row = mv_unit->mv[mv_unit->pred_direction].y;
+#else
     mv_l0.col = mv_unit->mv[REF_LIST_0].x;
     mv_l0.row = mv_unit->mv[REF_LIST_0].y;
+#endif
 
     MV mv_q4 = clamp_mv_to_umv_border_sb(
             blk_ptr->av1xd, &mv_l0, blk_geom->bwidth_uv, blk_geom->bheight_uv, 1, 1);
@@ -2763,7 +2765,6 @@ static const int32_t filter_sets[DUAL_FILTER_SET_SIZE][2] = {
         {2, 2},
 };
 
-
 void interpolation_filter_search(PictureControlSet *          picture_control_set_ptr,
                                  EbPictureBufferDesc *        prediction_ptr,
                                  ModeDecisionContext *        md_context_ptr,
@@ -3046,7 +3047,6 @@ void interpolation_filter_search(PictureControlSet *          picture_control_se
 }
 
 
-
 EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr, MvUnit *mv_unit,
                                      uint8_t ref_frame_type, uint8_t compound_idx,
                                      InterInterCompoundData *interinter_comp, uint16_t pu_origin_x,
@@ -3073,21 +3073,42 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
 
     uint8_t *src_ptr_l0, *src_ptr_l1;
     uint8_t *dst_ptr;
+#if WARP_IMPROVEMENT
+    if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
+        // Y
+        src_ptr_l0 = ref_pic_list0->buffer_y + (is16bit ? 2 : 1)
+                                               * (ref_pic_list0->origin_x + ref_pic_list0->origin_y * ref_pic_list0->stride_y);
+        src_ptr_l1 = is_compound ? ref_pic_list1->buffer_y + (is16bit ? 2 : 1)
+                                                             * (ref_pic_list1->origin_x + ref_pic_list1->origin_y * ref_pic_list1->stride_y)
+                                 : NULL;
+        src_stride = ref_pic_list0->stride_y;
+        buf_width = ref_pic_list0->width;
+        buf_height = ref_pic_list0->height;
+    }
+    else{ //UNI_PRED_LIST_1
+        src_ptr_l0 = ref_pic_list1->buffer_y + (is16bit ? 2 : 1)
+                                               * (ref_pic_list1->origin_x + ref_pic_list1->origin_y * ref_pic_list1->stride_y);
+        src_ptr_l1 = NULL;
+        src_stride = ref_pic_list1->stride_y;
+        buf_width = ref_pic_list1->width;
+        buf_height = ref_pic_list1->height;
+    }
+#else
     assert(ref_pic_list0 != NULL);
 
     // Y
     src_ptr_l0 = ref_pic_list0->buffer_y +
                  (is16bit ? 2 : 1) *
-                 (ref_pic_list0->origin_x + ref_pic_list0->origin_y * ref_pic_list0->stride_y);
+                     (ref_pic_list0->origin_x + ref_pic_list0->origin_y * ref_pic_list0->stride_y);
     src_ptr_l1 = is_compound
-                 ? ref_pic_list1->buffer_y +
-                   (is16bit ? 2 : 1) * (ref_pic_list1->origin_x +
-                                        ref_pic_list1->origin_y * ref_pic_list1->stride_y)
-                 : NULL;
+                     ? ref_pic_list1->buffer_y +
+                           (is16bit ? 2 : 1) * (ref_pic_list1->origin_x +
+                                                ref_pic_list1->origin_y * ref_pic_list1->stride_y)
+                     : NULL;
     src_stride = ref_pic_list0->stride_y;
     buf_width  = ref_pic_list0->width;
     buf_height = ref_pic_list0->height;
-
+#endif
     dst_ptr =
             prediction_ptr->buffer_y +
             (is16bit ? 2 : 1) * (prediction_ptr->origin_x + dst_origin_x +
@@ -3124,17 +3145,36 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
     if (perform_chroma) {
         if (blk_geom->bwidth >= 16 && blk_geom->bheight >= 16) {
             // Cb
+#if WARP_IMPROVEMENT
+            if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
+                src_ptr_l0 = ref_pic_list0->buffer_cb + (is16bit ? 2 : 1)
+                                                        * (ref_pic_list0->origin_x / 2
+                                                           + (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cb);
+                src_ptr_l1 = is_compound ? ref_pic_list1->buffer_cb + (is16bit ? 2 : 1)
+                                                                      * (ref_pic_list1->origin_x / 2
+                                                                         + (ref_pic_list1->origin_y / 2) * ref_pic_list1->stride_cb)
+                                         : NULL;
+                src_stride = ref_pic_list0->stride_cb;
+            }
+            else { //UNI_PRED_LIST_1
+                src_ptr_l0 = ref_pic_list1->buffer_cb + (is16bit ? 2 : 1)
+                                                        * (ref_pic_list1->origin_x / 2
+                                                           + (ref_pic_list1->origin_y / 2) * ref_pic_list1->stride_cb);
+                src_ptr_l1 = NULL;
+                src_stride = ref_pic_list1->stride_cb;
+            }
+#else
             src_ptr_l0 =
-                    ref_pic_list0->buffer_cb +
-                    (is16bit ? 2 : 1) * (ref_pic_list0->origin_x / 2 +
-                                         (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cb);
+                ref_pic_list0->buffer_cb +
+                (is16bit ? 2 : 1) * (ref_pic_list0->origin_x / 2 +
+                                     (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cb);
             src_ptr_l1 = is_compound ? ref_pic_list1->buffer_cb +
-                                       (is16bit ? 2 : 1) * (ref_pic_list1->origin_x / 2 +
-                                                            (ref_pic_list1->origin_y / 2) *
-                                                            ref_pic_list1->stride_cb)
+                                           (is16bit ? 2 : 1) * (ref_pic_list1->origin_x / 2 +
+                                                                (ref_pic_list1->origin_y / 2) *
+                                                                    ref_pic_list1->stride_cb)
                                      : NULL;
             src_stride = ref_pic_list0->stride_cb;
-
+#endif
             dst_ptr =
                     prediction_ptr->buffer_cb +
                     (is16bit ? 2 : 1) * ((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 +
@@ -3167,17 +3207,36 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
                                            rf);
 
             // Cr
+#if WARP_IMPROVEMENT
+            if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
+                src_ptr_l0 = ref_pic_list0->buffer_cr + (is16bit ? 2 : 1)
+                                                        * (ref_pic_list0->origin_x / 2
+                                                           + (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cr);
+                src_ptr_l1 = is_compound ? ref_pic_list1->buffer_cr + (is16bit ? 2 : 1)
+                                                                      * (ref_pic_list1->origin_x / 2
+                                                                         + (ref_pic_list1->origin_y / 2) * ref_pic_list1->stride_cr)
+                                         : NULL;
+                src_stride = ref_pic_list0->stride_cr;
+            }
+            else { //UNI_PRED_LIST_1
+                src_ptr_l0 = ref_pic_list1->buffer_cr + (is16bit ? 2 : 1)
+                                                        * (ref_pic_list1->origin_x / 2
+                                                           + (ref_pic_list1->origin_y / 2) * ref_pic_list1->stride_cr);
+                src_ptr_l1 = NULL;
+                src_stride = ref_pic_list1->stride_cr;
+            }
+#else
             src_ptr_l0 =
-                    ref_pic_list0->buffer_cr +
-                    (is16bit ? 2 : 1) * (ref_pic_list0->origin_x / 2 +
-                                         (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cr);
+                ref_pic_list0->buffer_cr +
+                (is16bit ? 2 : 1) * (ref_pic_list0->origin_x / 2 +
+                                     (ref_pic_list0->origin_y / 2) * ref_pic_list0->stride_cr);
             src_ptr_l1 = is_compound ? ref_pic_list1->buffer_cr +
-                                       (is16bit ? 2 : 1) * (ref_pic_list1->origin_x / 2 +
-                                                            (ref_pic_list1->origin_y / 2) *
-                                                            ref_pic_list1->stride_cr)
+                                           (is16bit ? 2 : 1) * (ref_pic_list1->origin_x / 2 +
+                                                                (ref_pic_list1->origin_y / 2) *
+                                                                    ref_pic_list1->stride_cr)
                                      : NULL;
             src_stride = ref_pic_list0->stride_cr;
-
+#endif
             dst_ptr =
                     prediction_ptr->buffer_cr +
                     (is16bit ? 2 : 1) * ((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 +
@@ -3212,24 +3271,44 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
         } else { // Translation prediction when chroma block is smaller than 8x8
 
             // Cb
+#if WARP_IMPROVEMENT
+            if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
+                src_ptr_l0 = ref_pic_list0->buffer_cb + (is16bit ? 2 : 1)
+                                                        * ((ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2
+                                                           + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->stride_cb);
+                src_ptr_l1 = is_compound ? ref_pic_list1->buffer_cb + (is16bit ? 2 : 1)
+                                                                      * ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2
+                                                                         + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cb)
+                                         : NULL;
+                src_stride = ref_pic_list0->stride_cb;
+            }
+            else { //UNI_PRED_LIST_1
+                src_ptr_l0 = ref_pic_list1->buffer_cb + (is16bit ? 2 : 1)
+                                                        * ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2
+                                                           + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cb);
+                src_ptr_l1 = NULL;
+                src_stride = ref_pic_list1->stride_cb;
+            }
+#else
             src_ptr_l0 =
-                    ref_pic_list0->buffer_cb +
-                    (is16bit ? 2 : 1) * ((ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
-                                         (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
+                ref_pic_list0->buffer_cb +
+                (is16bit ? 2 : 1) * ((ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
+                                     (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
                                          ref_pic_list0->stride_cb);
             src_ptr_l1 = is_compound
-                         ? ref_pic_list1->buffer_cb +
-                           (is16bit ? 2 : 1) *
-                           ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
-                            (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
-                            ref_pic_list1->stride_cb)
-                         : NULL;
+                             ? ref_pic_list1->buffer_cb +
+                                   (is16bit ? 2 : 1) *
+                                       ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
+                                        (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
+                                            ref_pic_list1->stride_cb)
+                             : NULL;
+            src_stride = ref_pic_list0->stride_cb;
+#endif
             dst_ptr =
                     prediction_ptr->buffer_cb +
                     (is16bit ? 2 : 1) * ((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 +
                                          (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 *
                                          prediction_ptr->stride_cb);
-            src_stride = ref_pic_list0->stride_cb;
             dst_stride = prediction_ptr->stride_cb;
 
             chroma_plane_warped_motion_prediction_sub8x8(picture_control_set_ptr,
@@ -3249,24 +3328,44 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
                                                          mv_unit);
 
             // Cr
+#if WARP_IMPROVEMENT
+            if (mv_unit->pred_direction == UNI_PRED_LIST_0 || mv_unit->pred_direction == BI_PRED) {
+                src_ptr_l0 = ref_pic_list0->buffer_cr + (is16bit ? 2 : 1)
+                                                        * ((ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2
+                                                           + (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list0->stride_cr);
+                src_ptr_l1 = is_compound ? ref_pic_list1->buffer_cr + (is16bit ? 2 : 1)
+                                                                      * ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2
+                                                                         + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cr)
+                                         : NULL;
+                src_stride = ref_pic_list0->stride_cr;
+            }
+            else { //UNI_PRED_LIST_1
+                src_ptr_l0 = ref_pic_list1->buffer_cr + (is16bit ? 2 : 1)
+                                                        * ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2
+                                                           + (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 * ref_pic_list1->stride_cr);
+                src_ptr_l1 = NULL;
+                src_stride = ref_pic_list1->stride_cr;
+            }
+#else
             src_ptr_l0 =
-                    ref_pic_list0->buffer_cr +
-                    (is16bit ? 2 : 1) * ((ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
-                                         (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
+                ref_pic_list0->buffer_cr +
+                (is16bit ? 2 : 1) * ((ref_pic_list0->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
+                                     (ref_pic_list0->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
                                          ref_pic_list0->stride_cr);
             src_ptr_l1 = is_compound
-                         ? ref_pic_list1->buffer_cr +
-                           (is16bit ? 2 : 1) *
-                           ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
-                            (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
-                            ref_pic_list1->stride_cr)
-                         : NULL;
+                             ? ref_pic_list1->buffer_cr +
+                                   (is16bit ? 2 : 1) *
+                                       ((ref_pic_list1->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
+                                        (ref_pic_list1->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
+                                            ref_pic_list1->stride_cr)
+                             : NULL;
+            src_stride = ref_pic_list0->stride_cr;
+#endif
             dst_ptr =
                     prediction_ptr->buffer_cr +
                     (is16bit ? 2 : 1) * ((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 +
                                          (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 *
                                          prediction_ptr->stride_cb);
-            src_stride = ref_pic_list0->stride_cr;
             dst_stride = prediction_ptr->stride_cr;
 
             chroma_plane_warped_motion_prediction_sub8x8(picture_control_set_ptr,
@@ -3291,6 +3390,7 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
 }
 
 int32_t   is_inter_block(const BlockModeInfo *mbmi);
+
 
 EbErrorType av1_inter_prediction(
         PictureControlSet *picture_control_set_ptr, uint32_t interp_filters, BlkStruct *blk_ptr,
@@ -3469,11 +3569,11 @@ EbErrorType av1_inter_prediction(
                                     [ref_idx]
                                             ->object_ptr))
                                        ->reference_picture);
-
-                    src_ptr = ref_pic->buffer_cb +
-                              (((ref_pic->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
-                                (ref_pic->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
-                                ref_pic->stride_cb) << is16bit);
+                    src_ptr =
+                            ref_pic->buffer_cb +
+                            (((ref_pic->origin_x + ((pu_origin_x >> 3) << 3)) / 2 +
+                              (ref_pic->origin_y + ((pu_origin_y >> 3) << 3)) / 2 *
+                              ref_pic->stride_cb) << is16bit);
                     dst_ptr = prediction_ptr->buffer_cb +
                               (((prediction_ptr->origin_x + ((dst_origin_x >> 3) << 3)) / 2 +
                                 (prediction_ptr->origin_y + ((dst_origin_y >> 3) << 3)) / 2 *
@@ -3642,7 +3742,6 @@ EbErrorType av1_inter_prediction(
                     subpel_x,
                     subpel_y,
                     &conv_params);
-
 
         if (perform_chroma && blk_geom->has_uv && sub8x8_inter == 0) {
             //List0-Cb
