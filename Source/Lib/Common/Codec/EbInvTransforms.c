@@ -1336,7 +1336,7 @@ void av1_iadst32_new(const int32_t *input, int32_t *output, int8_t cos_bit,
     bf1[31] = bf0[27] - bf0[31];
     clamp_buf(bf1, size, stage_range[stage]);
 
-    /*!< stage 6 */    
+    /*!< stage 6 */
     bf0     = output;
     bf1[0]  = bf0[0];
     bf1[1]  = bf0[1];
