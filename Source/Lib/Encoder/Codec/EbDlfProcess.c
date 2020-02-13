@@ -69,7 +69,11 @@ EbErrorType dlf_context_ctor(EbThreadContext *thread_context_ptr, const EbEncHan
     temp_lf_recon_desc_init_data.split_mode   = EB_FALSE;
     temp_lf_recon_desc_init_data.color_format = color_format;
 
+#if FILTER_16BIT
+    if (1) {
+#else
     if (is_16bit) {
+#endif
         temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
         EB_NEW(context_ptr->temp_lf_recon_picture16bit_ptr,
                eb_recon_picture_buffer_desc_ctor,
@@ -127,6 +131,127 @@ void *dlf_kernel(void *input_ptr) {
             EbPictureBufferDesc *recon_buffer =
                 is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
 
+#if FILTER_16BIT
+            EbPictureBufferDesc *recon_buffer_8bit;
+            if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
+                recon_buffer = ((EbReferenceObject *)
+                    pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                    ->reference_picture16bit;
+                recon_buffer_8bit = ((EbReferenceObject *)
+                    pcs_ptr->parent_pcs_ptr->reference_picture_wrapper_ptr->object_ptr)
+                    ->reference_picture;
+            } else {
+                recon_buffer = pcs_ptr->recon_picture16bit_ptr;
+                recon_buffer_8bit = pcs_ptr->recon_picture_ptr;
+            }
+
+            if (scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
+                //copy recon from 8bit to 16bit
+                uint8_t*  recon_8bit;
+                int32_t   recon_stride_8bit;
+                uint16_t* recon_16bit;
+                int32_t   recon_stride_16bit;
+                // Y
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_y)
+                            + recon_buffer->origin_x
+                            + recon_buffer->origin_y * recon_buffer->stride_y;
+                recon_stride_16bit = recon_buffer->stride_y;
+                recon_8bit  = recon_buffer_8bit->buffer_y
+                            + recon_buffer_8bit->origin_x
+                            + recon_buffer_8bit->origin_y * recon_buffer_8bit->stride_y;
+                recon_stride_8bit = recon_buffer_8bit->stride_y;
+                for (int j = 0; j < recon_buffer->height; j++) {
+                    for (int i = 0; i < recon_buffer->width; i++) {
+                        recon_16bit[i + j * recon_stride_16bit] =
+                            (uint16_t)recon_8bit[i + j * recon_stride_8bit];
+                    }
+                }
+                // Cb
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_cb)
+                            + recon_buffer->origin_x / 2
+                            + recon_buffer->origin_y / 2 * recon_buffer->stride_cb;
+                recon_stride_16bit = recon_buffer->stride_cb;
+                recon_8bit  = recon_buffer_8bit->buffer_cb
+                            + recon_buffer_8bit->origin_x / 2
+                            + recon_buffer_8bit->origin_y / 2 * recon_buffer_8bit->stride_cb;
+                recon_stride_8bit = recon_buffer_8bit->stride_cb;
+                for (int j = 0; j < recon_buffer->height / 2; j++) {
+                    for (int i = 0; i < recon_buffer->width / 2; i++) {
+                        recon_16bit[i + j * recon_stride_16bit] =
+                            (uint16_t)recon_8bit[i + j * recon_stride_8bit];
+                    }
+                }
+                // Cr
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_cr)
+                            + recon_buffer->origin_x / 2
+                            + recon_buffer->origin_y / 2 * recon_buffer->stride_cr;
+                recon_stride_16bit = recon_buffer->stride_cr;
+                recon_8bit  = recon_buffer_8bit->buffer_cr
+                            + recon_buffer_8bit->origin_x / 2
+                            + recon_buffer_8bit->origin_y / 2 * recon_buffer_8bit->stride_cr;
+                recon_stride_8bit = recon_buffer_8bit->stride_cr;
+                for (int j = 0; j < recon_buffer->height / 2; j++) {
+                    for (int i = 0; i < recon_buffer->width / 2; i++) {
+                        recon_16bit[i + j * recon_stride_16bit] =
+                            (uint16_t)recon_8bit[i + j * recon_stride_8bit];
+                    }
+                }
+
+                // //copy input from 8bit to 16bit
+                uint8_t*  input_8bit;
+                int32_t   input_stride_8bit;
+                uint16_t* input_16bit;
+                int32_t   input_stride_16bit;
+                EbPictureBufferDesc* input_buffer_8bit = (EbPictureBufferDesc *)
+                    pcs_ptr->parent_pcs_ptr->enhanced_picture_ptr;
+                EbPictureBufferDesc* input_buffer = (EbPictureBufferDesc*)pcs_ptr->input_frame16bit;
+                // Y
+                input_16bit = (uint16_t*)(input_buffer->buffer_y)
+                            + input_buffer->origin_x
+                            + input_buffer->origin_y * input_buffer->stride_y;
+                input_stride_16bit = input_buffer->stride_y;
+                input_8bit  = input_buffer_8bit->buffer_y
+                            + input_buffer_8bit->origin_x
+                            + input_buffer_8bit->origin_y * input_buffer_8bit->stride_y;
+                input_stride_8bit = input_buffer_8bit->stride_y;
+                for (int j = 0; j < input_buffer->height; j++) {
+                    for (int i = 0; i < input_buffer->width; i++) {
+                        input_16bit[i + j * input_stride_16bit] =
+                            (uint16_t)input_8bit[i + j * input_stride_8bit];
+                    }
+                }
+                // Cb
+                input_16bit = (uint16_t*)(input_buffer->buffer_cb)
+                            + input_buffer->origin_x / 2
+                            + input_buffer->origin_y / 2 * input_buffer->stride_cb;
+                input_stride_16bit = input_buffer->stride_cb;
+                input_8bit  = input_buffer_8bit->buffer_cb
+                            + input_buffer_8bit->origin_x / 2
+                            + input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cb;
+                input_stride_8bit = input_buffer_8bit->stride_cb;
+                for (int j = 0; j < input_buffer->height / 2; j++) {
+                    for (int i = 0; i < input_buffer->width / 2; i++) {
+                        input_16bit[i + j * input_stride_16bit] =
+                            (uint16_t)input_8bit[i + j * input_stride_8bit];
+                    }
+                }
+                // Cr
+                input_16bit = (uint16_t*)(input_buffer->buffer_cr)
+                            + input_buffer->origin_x / 2
+                            + input_buffer->origin_y / 2 * input_buffer->stride_cr;
+                input_stride_16bit = input_buffer->stride_cr;
+                input_8bit  = input_buffer_8bit->buffer_cr
+                            + input_buffer_8bit->origin_x / 2
+                            + input_buffer_8bit->origin_y / 2 * input_buffer_8bit->stride_cr;
+                input_stride_8bit = input_buffer_8bit->stride_cr;
+                for (int j = 0; j < input_buffer->height / 2; j++) {
+                    for (int i = 0; i < input_buffer->width / 2; i++) {
+                        input_16bit[i + j * input_stride_16bit] =
+                            (uint16_t)input_8bit[i + j * input_stride_8bit];
+                    }
+                }
+            }
+#else
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE)
                 //get the 16bit form of the input SB
                 if (is_16bit)
@@ -142,7 +267,7 @@ void *dlf_kernel(void *input_ptr) {
             else // non ref pictures
                 recon_buffer =
                     is_16bit ? pcs_ptr->recon_picture16bit_ptr : pcs_ptr->recon_picture_ptr;
-
+#endif
             eb_av1_loop_filter_init(pcs_ptr);
 
             if (pcs_ptr->parent_pcs_ptr->loop_filter_mode == 2) {
@@ -167,6 +292,60 @@ void *dlf_kernel(void *input_ptr) {
             pcs_ptr->parent_pcs_ptr->lf.filter_level_v  = 0;
 #endif
             eb_av1_loop_filter_frame(recon_buffer, pcs_ptr, 0, 3);
+#if FILTER_16BIT
+            if (scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
+                //copy recon from 16bit to 8bit
+                uint8_t*  recon_8bit;
+                int32_t   recon_stride_8bit;
+                uint16_t* recon_16bit;
+                int32_t   recon_stride_16bit;
+                // Y
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_y)
+                            + recon_buffer->origin_x
+                            + recon_buffer->origin_y * recon_buffer->stride_y;
+                recon_stride_16bit = recon_buffer->stride_y;
+                recon_8bit  = recon_buffer_8bit->buffer_y
+                            + recon_buffer_8bit->origin_x
+                            + recon_buffer_8bit->origin_y * recon_buffer_8bit->stride_y;
+                recon_stride_8bit = recon_buffer_8bit->stride_y;
+                for (int j = 0; j < recon_buffer->height; j++) {
+                    for (int i = 0; i < recon_buffer->width; i++) {
+                        recon_8bit[i + j * recon_stride_8bit] =
+                            (uint8_t)recon_16bit[i + j * recon_stride_16bit];
+                    }
+                }
+                // Cb
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_cb)
+                            + recon_buffer->origin_x / 2
+                            + recon_buffer->origin_y / 2 * recon_buffer->stride_cb;
+                recon_stride_16bit = recon_buffer->stride_cb;
+                recon_8bit  = recon_buffer_8bit->buffer_cb
+                            + recon_buffer_8bit->origin_x / 2
+                            + recon_buffer_8bit->origin_y / 2 * recon_buffer_8bit->stride_cb;
+                recon_stride_8bit = recon_buffer_8bit->stride_cb;
+                for (int j = 0; j < recon_buffer->height / 2; j++) {
+                    for (int i = 0; i < recon_buffer->width / 2; i++) {
+                        recon_8bit[i + j * recon_stride_8bit] =
+                            (uint8_t)recon_16bit[i + j * recon_stride_16bit];
+                    }
+                }
+                // Cr
+                recon_16bit = (uint16_t*)(recon_buffer->buffer_cr)
+                            + recon_buffer->origin_x / 2
+                            + recon_buffer->origin_y / 2 * recon_buffer->stride_cr;
+                recon_stride_16bit = recon_buffer->stride_cr;
+                recon_8bit  = recon_buffer_8bit->buffer_cr
+                            + recon_buffer_8bit->origin_x / 2
+                            + recon_buffer_8bit->origin_y / 2 * recon_buffer_8bit->stride_cr;
+                recon_stride_8bit = recon_buffer_8bit->stride_cr;
+                for (int j = 0; j < recon_buffer->height / 2; j++) {
+                    for (int i = 0; i < recon_buffer->width / 2; i++) {
+                        recon_8bit[i + j * recon_stride_8bit] =
+                            (uint8_t)recon_16bit[i + j * recon_stride_16bit];
+                    }
+                }
+            }
+#endif
         }
 
         //pre-cdef prep

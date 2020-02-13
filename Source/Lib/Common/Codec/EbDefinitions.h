@@ -45,6 +45,14 @@ extern "C" {
 #define ENCDEC_16BIT 0
 #define TILES_PARALLEL 0
 
+#define FILTER_16BIT 1
+
+#if FILTER_16BIT
+#define SHUT_DLF 0
+#define SHUT_CDEF 1
+#define SHUT_REST 1
+#endif
+
 #if TILES_PARALLEL
 #define MAX_TILE_CNTS 128 // Annex A.3
 #endif

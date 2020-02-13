@@ -142,7 +142,11 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
     temp_lf_recon_desc_init_data.split_mode    = EB_FALSE;
     temp_lf_recon_desc_init_data.color_format  = color_format;
 
+#if FILTER_16BIT
+    if (1) {
+#else
     if (is_16bit) {
+#endif
         temp_lf_recon_desc_init_data.bit_depth = EB_16BIT;
         EB_NEW(context_ptr->temp_lf_recon_picture16bit_ptr,
                eb_recon_picture_buffer_desc_ctor,

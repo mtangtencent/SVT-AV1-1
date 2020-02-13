@@ -142,14 +142,25 @@ EbErrorType eb_sequence_control_set_ctor(SequenceControlSet *scs_ptr, EbPtr obje
     // 2 - adaptive
 
     scs_ptr->seq_header.order_hint_info.enable_ref_frame_mvs = 1;
-#if NO_ENCDEC || SHUT_FILTERING
+#if NO_ENCDEC || SHUT_FILTERING || FILTER_16BIT
+#if SHUT_CDEF
     scs_ptr->seq_header.enable_cdef = 0;
-
+#else
+    scs_ptr->seq_header.enable_cdef = 1;
+#endif
+#if SHUT_REST
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT)
         scs_ptr->seq_header.enable_restoration = 0;
     else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
+#else
+    if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT)
+        scs_ptr->seq_header.enable_restoration = 1;
+    else
+        scs_ptr->seq_header.enable_restoration =
+            (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
+#endif
 #else
     scs_ptr->seq_header.enable_cdef = 1;
     if (scs_ptr->static_config.enable_restoration_filtering == DEFAULT)

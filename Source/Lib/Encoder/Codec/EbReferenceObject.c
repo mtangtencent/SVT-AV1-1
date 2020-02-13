@@ -174,7 +174,7 @@ EbErrorType eb_reference_object_ctor(EbReferenceObject *reference_object,
             picture_buffer_desc_init_data_ptr,
             picture_buffer_desc_init_data_16bit_ptr.bit_depth);
     }
-#if ENCDEC_16BIT
+#if ENCDEC_16BIT || FILTER_16BIT
     picture_buffer_desc_init_data_16bit_ptr.split_mode = EB_FALSE;
     picture_buffer_desc_init_data_16bit_ptr.bit_depth  = EB_10BIT; 
     EB_NEW(reference_object->reference_picture16bit,
