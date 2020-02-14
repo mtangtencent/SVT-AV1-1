@@ -49,7 +49,7 @@ extern "C" {
 
 #if FILTER_16BIT
 #define SHUT_DLF 0
-#define SHUT_CDEF 1
+#define SHUT_CDEF 0
 #define SHUT_REST 1
 #endif
 
