@@ -2046,11 +2046,7 @@ void copy_api_from_app(
     scs_ptr->use_output_stat_file = scs_ptr->static_config.output_stat_file ? 1 : 0;
     // Deblock Filter
 #if SHUT_FILTERING
-#if SHUT_DLF
     scs_ptr->static_config.disable_dlf_flag = 1;
-#else
-    scs_ptr->static_config.disable_dlf_flag = 0;
-#endif
 #else
     scs_ptr->static_config.disable_dlf_flag = ((EbSvtAv1EncConfiguration*)config_struct)->disable_dlf_flag;
     #endif

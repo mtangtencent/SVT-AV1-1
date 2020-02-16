@@ -525,13 +525,14 @@ void *cdef_kernel(void *input_ptr) {
 
         if (scs_ptr->seq_header.enable_cdef && pcs_ptr->parent_pcs_ptr->cdef_filter_mode) {
 #if FILTER_16BIT
-            cdef_seg_search16bit(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
+            if (scs_ptr->static_config.encoder_16bit_pipeline || is_16bit)
+                cdef_seg_search16bit(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
 #else
             if (is_16bit)
                 cdef_seg_search16bit(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
+#endif
             else
                 cdef_seg_search(pcs_ptr, scs_ptr, dlf_results_ptr->segment_index);
-#endif
         }
 
         //all seg based search is done. update total processed segments. if all done, finish the search and perfrom application.
@@ -547,13 +548,14 @@ void *cdef_kernel(void *input_ptr) {
                     pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag ||
                     scs_ptr->static_config.recon_enabled) {
 #if FILTER_16BIT
-                    av1_cdef_frame16bit(0, scs_ptr, pcs_ptr);
+                    if (scs_ptr->static_config.encoder_16bit_pipeline || is_16bit)
+                        av1_cdef_frame16bit(0, scs_ptr, pcs_ptr);
 #else
                     if (is_16bit)
                         av1_cdef_frame16bit(0, scs_ptr, pcs_ptr);
+#endif
                     else
                         eb_av1_cdef_frame(0, scs_ptr, pcs_ptr);
-#endif
                 }
             } else {
                 frm_hdr->cdef_params.cdef_bits             = 0;
@@ -562,8 +564,10 @@ void *cdef_kernel(void *input_ptr) {
                 frm_hdr->cdef_params.cdef_uv_strength[0]   = 0;
             }
 
-#if FILTER_16BIT
-            if (scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
+#if FILTER_16BIT && COPY_FILTER_OUTPUT
+            if (scs_ptr->static_config.encoder_16bit_pipeline &&
+                scs_ptr->static_config.encoder_bit_depth == EB_8BIT &&
+               !scs_ptr->seq_header.enable_restoration) {
                 //copy recon from 16bit to 8bit
                 uint8_t*  recon_8bit;
                 int32_t   recon_stride_8bit;
@@ -642,21 +646,21 @@ void *cdef_kernel(void *input_ptr) {
                                 cm->frame_to_show->strides[0],
                                 RESTORATION_BORDER,
                                 RESTORATION_BORDER,
-                                1);
+                                scs_ptr->static_config.encoder_16bit_pipeline || is_16bit);
                 eb_extend_frame(cm->frame_to_show->buffers[1],
                                 cm->frame_to_show->crop_widths[1],
                                 cm->frame_to_show->crop_heights[1],
                                 cm->frame_to_show->strides[1],
                                 RESTORATION_BORDER,
                                 RESTORATION_BORDER,
-                                1);
+                                scs_ptr->static_config.encoder_16bit_pipeline || is_16bit);
                 eb_extend_frame(cm->frame_to_show->buffers[2],
                                 cm->frame_to_show->crop_widths[1],
                                 cm->frame_to_show->crop_heights[1],
                                 cm->frame_to_show->strides[1],
                                 RESTORATION_BORDER,
                                 RESTORATION_BORDER,
-                                1);
+                                scs_ptr->static_config.encoder_16bit_pipeline || is_16bit);
 #else
                 //are these still needed here?/!!!
                 eb_extend_frame(cm->frame_to_show->buffers[0],

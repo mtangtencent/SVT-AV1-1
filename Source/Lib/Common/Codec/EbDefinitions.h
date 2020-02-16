@@ -48,9 +48,10 @@ extern "C" {
 #define FILTER_16BIT 1
 
 #if FILTER_16BIT
-#define SHUT_DLF 0
-#define SHUT_CDEF 0
-#define SHUT_REST 0
+#undef SHUT_FILTERING
+#define SHUT_FILTERING 0
+#define COPY_FILTER_INPUT 1
+#define COPY_FILTER_OUTPUT 1
 #endif
 
 #if TILES_PARALLEL

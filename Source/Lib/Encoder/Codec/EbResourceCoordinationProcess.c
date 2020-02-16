@@ -185,7 +185,7 @@ EbErrorType signal_derivation_pre_analysis_oq(SequenceControlSet *     scs_ptr,
     } else
         scs_ptr->seq_header.enable_restoration =
             (uint8_t)scs_ptr->static_config.enable_restoration_filtering;
-#if SHUT_REST
+#if SHUT_FILTERING
     scs_ptr->seq_header.enable_restoration = 0;
 #endif
 

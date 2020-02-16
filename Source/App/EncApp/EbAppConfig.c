@@ -46,6 +46,7 @@
 #define FRAME_RATE_NUMERATOR_TOKEN "-fps-num"
 #define FRAME_RATE_DENOMINATOR_TOKEN "-fps-denom"
 #define ENCODER_BIT_DEPTH "-bit-depth"
+#define ENCODER_16BIT_PIPELINE "-16bit-pipeline"
 #define ENCODER_COLOR_FORMAT "-color-format"
 #define INPUT_COMPRESSED_TEN_BIT_FORMAT "-compressed-ten-bit-format"
 #define ENCMODE_TOKEN "-enc-mode"
@@ -259,6 +260,9 @@ static void set_frame_rate_denominator(const char *value, EbConfig *cfg) {
 };
 static void set_encoder_bit_depth(const char *value, EbConfig *cfg) {
     cfg->encoder_bit_depth = strtoul(value, NULL, 0);
+}
+static void set_encoder_16bit_pipeline(const char *value, EbConfig *cfg) {
+    cfg->encoder_16bit_pipeline = (EbBool)strtoul(value, NULL, 0);
 }
 static void set_encoder_color_format(const char *value, EbConfig *cfg) {
     cfg->encoder_color_format = strtoul(value, NULL, 0);
@@ -655,6 +659,7 @@ ConfigEntry config_entry[] = {
     {SINGLE_INPUT, FRAME_RATE_NUMERATOR_TOKEN, "FrameRateNumerator", set_frame_rate_numerator},
     {SINGLE_INPUT, FRAME_RATE_DENOMINATOR_TOKEN, "FrameRateDenominator", set_frame_rate_denominator},
     {SINGLE_INPUT, ENCODER_BIT_DEPTH, "EncoderBitDepth", set_encoder_bit_depth},
+    {SINGLE_INPUT, ENCODER_16BIT_PIPELINE, "Encoder16BitPipeline", set_encoder_16bit_pipeline},
     {SINGLE_INPUT, ENCODER_COLOR_FORMAT, "EncoderColorFormat", set_encoder_color_format},
     {SINGLE_INPUT,
      INPUT_COMPRESSED_TEN_BIT_FORMAT,
@@ -858,6 +863,7 @@ void eb_config_ctor(EbConfig *config_ptr) {
     config_ptr->error_log_file       = stderr;
     config_ptr->frame_rate           = 30 << 16;
     config_ptr->encoder_bit_depth    = 8;
+    config_ptr->encoder_16bit_pipeline = 0;
     config_ptr->encoder_color_format = 1; //EB_YUV420
     config_ptr->buffered_input       = -1;
 

@@ -115,9 +115,11 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
         init_data.buffer_enable_mask = PICTURE_BUFFER_DESC_FULL_MASK;
         init_data.max_width          = (uint16_t)scs_ptr->max_input_luma_width;
         init_data.max_height         = (uint16_t)scs_ptr->max_input_luma_height;
-        init_data.bit_depth          = is_16bit ? EB_16BIT : EB_8BIT;
 #if FILTER_16BIT
-        init_data.bit_depth          = EB_16BIT;
+        init_data.bit_depth          = config->encoder_16bit_pipeline || is_16bit
+                                     ? EB_16BIT : EB_8BIT;
+#else
+        init_data.bit_depth          = is_16bit ? EB_16BIT : EB_8BIT;
 #endif
         init_data.color_format       = color_format;
         init_data.left_padding       = AOM_BORDER_IN_PIXELS;
@@ -146,7 +148,7 @@ EbErrorType rest_context_ctor(EbThreadContext *  thread_context_ptr,
     temp_lf_recon_desc_init_data.color_format  = color_format;
 
 #if FILTER_16BIT
-    if (1) {
+    if (config->encoder_16bit_pipeline || is_16bit) {
 #else
     if (is_16bit) {
 #endif
@@ -513,9 +515,13 @@ void *rest_kernel(void *input_ptr) {
             // ------- end: Normative upscaling - super-resolution tool
 
 #if FILTER_16BIT
-            get_own_recon(scs_ptr, pcs_ptr, context_ptr, 1);
+            get_own_recon(scs_ptr, pcs_ptr, context_ptr,
+                scs_ptr->static_config.encoder_16bit_pipeline || is_16bit);
             Yv12BufferConfig cpi_source;
-            link_eb_to_aom_buffer_desc(pcs_ptr->input_frame16bit, &cpi_source);
+            link_eb_to_aom_buffer_desc(scs_ptr->static_config.encoder_16bit_pipeline || is_16bit
+                                       ? pcs_ptr->input_frame16bit
+                                       : pcs_ptr->parent_pcs_ptr->enhanced_unscaled_picture_ptr,
+                                       &cpi_source);
 #else
             get_own_recon(scs_ptr, pcs_ptr, context_ptr, is_16bit);
 
@@ -568,8 +574,9 @@ void *rest_kernel(void *input_ptr) {
             }
             cm->sg_frame_ep = best_ep;
 
-#if FILTER_16BIT
-            if (scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
+#if FILTER_16BIT && COPY_FILTER_OUTPUT
+            if (scs_ptr->static_config.encoder_16bit_pipeline &&
+                scs_ptr->static_config.encoder_bit_depth == EB_8BIT) {
                 //copy recon from 16bit to 8bit
                 uint8_t*  recon_8bit;
                 int32_t   recon_stride_8bit;
