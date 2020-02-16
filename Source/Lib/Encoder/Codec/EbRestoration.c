@@ -1893,7 +1893,11 @@ EbErrorType eb_av1_alloc_restoration_buffers(Av1Common *cm) {
         const int32_t ss_x     = is_uv && cm->subsampling_x;
         const int32_t plane_w  = ((frame_w + ss_x) >> ss_x) + 2 * RESTORATION_EXTRA_HORZ;
         const int32_t stride   = ALIGN_POWER_OF_TWO(plane_w, 5);
+#if FILTER_16BIT
+        const int32_t buf_size = num_stripes * stride * RESTORATION_CTX_VERT << 1;
+#else
         const int32_t buf_size = num_stripes * stride * RESTORATION_CTX_VERT << use_highbd;
+#endif
         RestorationStripeBoundaries *boundaries = &cm->rst_info[p].boundaries;
 
         {

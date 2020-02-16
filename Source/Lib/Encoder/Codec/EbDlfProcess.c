@@ -369,12 +369,6 @@ void *dlf_kernel(void *input_ptr) {
                 else
                     recon_picture_ptr = pcs_ptr->recon_picture_ptr;
             }
-            // TODO: mtang REST buffer need to be 16bit when 16bit rest is enabled
-            link_eb_to_aom_buffer_desc(recon_picture_ptr, cm->frame_to_show);
-
-            if (scs_ptr->seq_header.enable_restoration)
-                eb_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
-
 #if FILTER_16BIT
             if (pcs_ptr->parent_pcs_ptr->is_used_as_reference_flag == EB_TRUE) {
                 recon_picture_ptr = ((EbReferenceObject *)
@@ -383,7 +377,11 @@ void *dlf_kernel(void *input_ptr) {
             } else {
                 recon_picture_ptr = pcs_ptr->recon_picture16bit_ptr;
             }
+            cm->use_highbitdepth = 1;
 #endif
+            link_eb_to_aom_buffer_desc(recon_picture_ptr, cm->frame_to_show);
+            if (scs_ptr->seq_header.enable_restoration)
+                eb_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 0);
             if (scs_ptr->seq_header.enable_cdef && pcs_ptr->parent_pcs_ptr->cdef_filter_mode) {
 #if FILTER_16BIT
                 if (1) {

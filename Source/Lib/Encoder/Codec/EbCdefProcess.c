@@ -634,6 +634,30 @@ void *cdef_kernel(void *input_ptr) {
             if (scs_ptr->seq_header.enable_restoration) {
                 eb_av1_loop_restoration_save_boundary_lines(cm->frame_to_show, cm, 1);
 
+#if FILTER_16BIT
+                //are these still needed here?/!!!
+                eb_extend_frame(cm->frame_to_show->buffers[0],
+                                cm->frame_to_show->crop_widths[0],
+                                cm->frame_to_show->crop_heights[0],
+                                cm->frame_to_show->strides[0],
+                                RESTORATION_BORDER,
+                                RESTORATION_BORDER,
+                                1);
+                eb_extend_frame(cm->frame_to_show->buffers[1],
+                                cm->frame_to_show->crop_widths[1],
+                                cm->frame_to_show->crop_heights[1],
+                                cm->frame_to_show->strides[1],
+                                RESTORATION_BORDER,
+                                RESTORATION_BORDER,
+                                1);
+                eb_extend_frame(cm->frame_to_show->buffers[2],
+                                cm->frame_to_show->crop_widths[1],
+                                cm->frame_to_show->crop_heights[1],
+                                cm->frame_to_show->strides[1],
+                                RESTORATION_BORDER,
+                                RESTORATION_BORDER,
+                                1);
+#else
                 //are these still needed here?/!!!
                 eb_extend_frame(cm->frame_to_show->buffers[0],
                                 cm->frame_to_show->crop_widths[0],
@@ -656,6 +680,7 @@ void *cdef_kernel(void *input_ptr) {
                                 RESTORATION_BORDER,
                                 RESTORATION_BORDER,
                                 is_16bit);
+#endif
             }
 
             pcs_ptr->rest_segments_column_count = scs_ptr->rest_segment_column_count;
