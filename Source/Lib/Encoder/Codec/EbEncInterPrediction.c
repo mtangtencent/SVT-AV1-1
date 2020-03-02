@@ -55,7 +55,7 @@ void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint
                                      InterpFilterParams *filter_params_y, int32_t subpel_x,
                                      int32_t subpel_y, ConvolveParams *conv_params,
                                      InterInterCompoundData *comp_data, uint8_t bitdepth,
-                                     uint8_t plane) {
+                                     uint8_t plane, EbBool is_16bit) {
     //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
     //use regular path to generate a prediction for ref1 into  a temporary buffer,
     //then  blend that temporary buffer with that from  the first reference.
@@ -128,7 +128,8 @@ void av1_make_masked_inter_predictor(uint8_t *src_ptr, uint32_t src_stride, uint
                                    bheight,
                                    bwidth,
                                    conv_params,
-                                   bitdepth);
+                                   bitdepth,
+                                   is_16bit);
 }
 
 static const uint8_t bsize_curvfit_model_cat_lookup[BlockSizeS_ALL] = {
@@ -1794,8 +1795,7 @@ void av1_make_masked_warp_inter_predictor(uint8_t *src_ptr, uint32_t src_stride,
                                         ConvolveParams *        conv_params,
                                         InterInterCompoundData *comp_data, uint8_t bitdepth,
                                         uint8_t plane, uint16_t pu_origin_x, uint16_t pu_origin_y,
-                                        EbWarpedMotionParams *wm_params_l1) {
-    EbBool is16bit = (EbBool)(bitdepth > EB_8BIT);
+                                        EbWarpedMotionParams *wm_params_l1, EbBool is16bit) {
 
     //We come here when we have a prediction done using regular path for the ref0 stored in conv_param.dst.
     //use regular path to generate a prediction for ref1 into  a temporary buffer,
@@ -1863,7 +1863,8 @@ void av1_make_masked_warp_inter_predictor(uint8_t *src_ptr, uint32_t src_stride,
                                    bheight,
                                    bwidth,
                                    conv_params,
-                                   bitdepth);
+                                   bitdepth,
+                                   is16bit);
 }
 
 // This function has a structure similar to av1_build_obmc_inter_prediction
@@ -2194,8 +2195,7 @@ static void plane_warped_motion_prediction(
         EbWarpedMotionParams *wm_params_l1, uint8_t is_compound, uint8_t bit_depth, int32_t src_stride,
         int32_t dst_stride, uint16_t buf_width, uint16_t buf_height, uint8_t ss_x, uint8_t ss_y,
         uint8_t *src_ptr_l0, uint8_t *src_ptr_l1, uint8_t *dst_ptr, uint8_t plane,
-        MvReferenceFrame rf[2]) {
-    EbBool is16bit = (EbBool)(bit_depth > EB_8BIT);
+        MvReferenceFrame rf[2], EbBool is16bit) {
 
     if (!is_compound) {
         ConvolveParams conv_params =
@@ -2270,7 +2270,8 @@ static void plane_warped_motion_prediction(
                                                  plane,
                                                  pu_origin_x,
                                                  pu_origin_y,
-                                                 wm_params_l1);
+                                                 wm_params_l1,
+                                                 is16bit);
         } else {
             conv_params.do_average = 1;
             eb_av1_warp_plane(wm_params_l1,
@@ -2962,7 +2963,8 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
                                    src_ptr_l1,
                                    dst_ptr,
                                    0, // plane
-                                   rf);
+                                   rf,
+                                   is16bit);
 
     if (!blk_geom->has_uv) return return_error;
 
@@ -3028,7 +3030,8 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
                                            src_ptr_l1,
                                            dst_ptr,
                                            1, // plane
-                                           rf);
+                                           rf,
+                                           is16bit);
 
             // Cr
 #if WARP_IMPROVEMENT
@@ -3090,7 +3093,8 @@ EbErrorType warped_motion_prediction(PictureControlSet *picture_control_set_ptr,
                                            src_ptr_l1,
                                            dst_ptr,
                                            2, // plane
-                                           rf);
+                                           rf,
+                                           is16bit);
 
         } else { // Translation prediction when chroma block is smaller than 8x8
 
@@ -4086,8 +4090,8 @@ EbErrorType av1_inter_prediction(
                     &conv_params,
                     interinter_comp,
                     bit_depth,
-                    0//plane=Luma  seg_mask is computed based on luma and used for chroma
-            );
+                    0, //plane=Luma  seg_mask is computed based on luma and used for chroma
+                    is16bit);
         }
         else
         {
@@ -4179,8 +4183,8 @@ EbErrorType av1_inter_prediction(
                         &conv_params,
                         interinter_comp,
                         bit_depth,
-                        1 //plane=cb  seg_mask is computed based on luma and used for chroma
-                );
+                        1, //plane=cb  seg_mask is computed based on luma and used for chroma
+                        is16bit);
             }
             else
             {
@@ -4265,8 +4269,8 @@ EbErrorType av1_inter_prediction(
                         &conv_params,
                         interinter_comp,
                         bit_depth,
-                        1 //plane=Cr  seg_mask is computed based on luma and used for chroma
-                );
+                        1, //plane=Cr  seg_mask is computed based on luma and used for chroma
+                        is16bit);
             }
             else
             {
